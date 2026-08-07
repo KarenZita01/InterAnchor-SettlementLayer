@@ -1,34 +1,30 @@
 #![no_std]
 
 use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, Bytes, Env, Symbol, Vec,
+    contract, contractimpl, contracttype, symbol_short, Address, Env, Symbol,
 };
 
 const ADMIN: Symbol = symbol_short!("ADMIN");
-const MERCHANT: Symbol = symbol_short!("MERCHANT");
-const SETTLEMENT_PREF: Symbol = symbol_short!("SET_PREF");
-const PENDING_SETTLEMENT: Symbol = symbol_short!("PENDING");
-const COMPLETED_SETTLEMENT: Symbol = symbol_short!("DONE");
-const PATH_GRAPH: Symbol = symbol_short!("PATH_G");
+const PENDING: Symbol = symbol_short!("PENDING");
+const DONE: Symbol = symbol_short!("DONE");
 
 #[derive(Clone)]
 #[contracttype]
 pub enum DataKey {
     Admin,
     MerchantPrefs(Address),
-    PendingSettlements(u64),
-    CompletedSettlements(u64),
-    PathGraph,
+    Settlement(u64),
     SettlementCount,
-    MerchantSettlements(Address, u64),
+    CompletedCount,
+    MerchantSettlement(Address, u64),
 }
 
 #[derive(Clone)]
 #[contracttype]
 pub struct SettlementPreferences {
     pub merchant: Address,
-    pub target_asset: String,
-    pub target_anchor: String,
+    pub target_asset: Symbol,
+    pub target_anchor: Symbol,
     pub max_slippage_bps: u32,
     pub auto_accept: bool,
 }
@@ -39,11 +35,11 @@ pub struct PendingSettlement {
     pub id: u64,
     pub customer: Address,
     pub merchant: Address,
-    pub source_asset: String,
-    pub source_anchor: String,
+    pub source_asset: Symbol,
+    pub source_anchor: Symbol,
     pub amount: i128,
-    pub target_asset: String,
-    pub target_anchor: String,
+    pub target_asset: Symbol,
+    pub target_anchor: Symbol,
     pub status: Symbol,
     pub created_at: u64,
 }
@@ -51,11 +47,10 @@ pub struct PendingSettlement {
 #[derive(Clone)]
 #[contracttype]
 pub struct SwapPath {
-    pub source_asset: String,
-    pub source_anchor: String,
-    pub target_asset: String,
-    pub target_anchor: String,
-    pub path: Vec<String>,
+    pub source_asset: Symbol,
+    pub source_anchor: Symbol,
+    pub target_asset: Symbol,
+    pub target_anchor: Symbol,
     pub estimated_rate: u32,
     pub liquidity_pool_id: u64,
 }
@@ -70,13 +65,16 @@ impl SettlementEngine {
         env.storage()
             .instance()
             .set(&DataKey::SettlementCount, &0u64);
+        env.storage()
+            .instance()
+            .set(&DataKey::CompletedCount, &0u64);
     }
 
     pub fn set_merchant_preferences(
         env: Env,
         merchant: Address,
-        target_asset: String,
-        target_anchor: String,
+        target_asset: Symbol,
+        target_anchor: Symbol,
         max_slippage_bps: u32,
         auto_accept: bool,
     ) {
@@ -111,8 +109,8 @@ impl SettlementEngine {
         env: Env,
         customer: Address,
         merchant: Address,
-        source_asset: String,
-        source_anchor: String,
+        source_asset: Symbol,
+        source_anchor: Symbol,
         amount: i128,
     ) -> u64 {
         customer.require_auth();
@@ -138,13 +136,13 @@ impl SettlementEngine {
             amount,
             target_asset: prefs.target_asset.clone(),
             target_anchor: prefs.target_anchor.clone(),
-            status: PENDING_SETTLEMENT,
+            status: PENDING,
             created_at: env.ledger().timestamp(),
         };
 
         env.storage()
             .persistent()
-            .set(&DataKey::PendingSettlements(count), &settlement);
+            .set(&DataKey::Settlement(count), &settlement);
 
         env.storage()
             .instance()
@@ -175,10 +173,10 @@ impl SettlementEngine {
         let mut settlement: PendingSettlement = env
             .storage()
             .persistent()
-            .get(&DataKey::PendingSettlements(settlement_id))
+            .get(&DataKey::Settlement(settlement_id))
             .unwrap_or_else(|| panic!("Settlement not found"));
 
-        if settlement.status != PENDING_SETTLEMENT {
+        if settlement.status != PENDING {
             panic!("Settlement already processed");
         }
 
@@ -193,28 +191,26 @@ impl SettlementEngine {
             panic!("Slippage exceeds maximum allowed");
         }
 
-        settlement.status = COMPLETED_SETTLEMENT;
+        settlement.status = DONE;
 
         env.storage()
             .persistent()
-            .set(&DataKey::PendingSettlements(settlement_id), &settlement);
+            .set(&DataKey::Settlement(settlement_id), &settlement);
 
         let completed_count: u64 = env
             .storage()
             .instance()
-            .get(&DataKey::CompletedSettlements)
+            .get(&DataKey::CompletedCount)
             .unwrap_or(0);
 
-        env.storage()
-            .persistent()
-            .set(
-                &DataKey::MerchantSettlements(settlement.merchant.clone(), completed_count),
-                &settlement,
-            );
+        env.storage().persistent().set(
+            &DataKey::MerchantSettlement(settlement.merchant.clone(), completed_count),
+            &settlement,
+        );
 
         env.storage()
             .instance()
-            .set(&DataKey::CompletedSettlements, &(completed_count + 1));
+            .set(&DataKey::CompletedCount, &(completed_count + 1));
 
         env.events().publish(
             (symbol_short!("SETT_DONE"),),
@@ -226,79 +222,48 @@ impl SettlementEngine {
 
     pub fn find_swap_path(
         env: Env,
-        source_asset: String,
-        source_anchor: String,
-        target_asset: String,
-        target_anchor: String,
+        source_asset: Symbol,
+        source_anchor: Symbol,
+        target_asset: Symbol,
+        target_anchor: Symbol,
     ) -> SwapPath {
         if source_asset == target_asset && source_anchor == target_anchor {
             return SwapPath {
-                source_asset: source_asset.clone(),
-                source_anchor: source_anchor.clone(),
-                target_asset: target_asset.clone(),
-                target_anchor: target_anchor.clone(),
-                path: Vec::new(&env),
+                source_asset,
+                source_anchor,
+                target_asset,
+                target_anchor,
                 estimated_rate: 10000,
                 liquidity_pool_id: 0,
             };
         }
-
-        let path = Self::calculate_optimal_path(
-            &env,
-            &source_asset,
-            &source_anchor,
-            &target_asset,
-            &target_anchor,
-        );
 
         SwapPath {
             source_asset,
             source_anchor,
             target_asset,
             target_anchor,
-            path,
-            estimated_rate: 9950,
+            estimated_rate: 9970,
             liquidity_pool_id: 1,
         }
     }
 
-    fn calculate_optimal_path(
-        env: &Env,
-        source_asset: &String,
-        source_anchor: &String,
-        target_asset: &String,
-        target_anchor: &String,
-    ) -> Vec<String> {
-        let mut path = Vec::new(env);
-
-        if source_asset == target_asset {
-            path.push_back(source_anchor.clone());
-            path.push_back(target_anchor.clone());
-        } else {
-            path.push_back(source_anchor.clone());
-            path.push_back(String::from_str(env, "USDC"));
-            path.push_back(target_anchor.clone());
-        }
-
-        path
-    }
-
-    pub fn get_pending_settlements(env: Env, merchant: Address) -> Vec<PendingSettlement> {
+    pub fn get_pending_settlements(env: Env, merchant: Address) -> soroban_sdk::Vec<PendingSettlement> {
         let count: u64 = env
             .storage()
             .instance()
             .get(&DataKey::SettlementCount)
             .unwrap_or(0);
 
-        let mut settlements = Vec::new(&env);
+        let mut settlements = soroban_sdk::Vec::new(&env);
 
         for i in 0..count {
             if let Some(settlement) = env
                 .storage()
                 .persistent()
-                .get::<DataKey, PendingSettlement>(&DataKey::PendingSettlements(i))
+                .get::<DataKey, PendingSettlement>(&DataKey::Settlement(i))
             {
-                if settlement.merchant == merchant && settlement.status == PENDING_SETTLEMENT {
+                if settlement.merchant == merchant && settlement.status == PENDING {
                     settlements.push_back(settlement);
                 }
             }
@@ -311,7 +276,7 @@ impl SettlementEngine {
         let count: u64 = env
             .storage()
             .instance()
-            .get(&DataKey::CompletedSettlements)
+            .get(&DataKey::CompletedCount)
             .unwrap_or(0);
 
         let mut total_settlements = 0u64;
@@ -321,7 +286,7 @@ impl SettlementEngine {
             if let Some(settlement) = env
                 .storage()
                 .persistent()
-                .get::<DataKey, PendingSettlement>(&DataKey::MerchantSettlements(merchant.clone(), i))
+                .get::<DataKey, PendingSettlement>(&DataKey::MerchantSettlement(merchant.clone(), i))
             {
                 total_settlements += 1;
                 total_volume += settlement.amount;
@@ -329,5 +294,12 @@ impl SettlementEngine {
         }
 
         (total_settlements, total_volume)
+    }
+
+    pub fn get_settlement(env: Env, settlement_id: u64) -> PendingSettlement {
+        env.storage()
+            .persistent()
+            .get(&DataKey::Settlement(settlement_id))
+            .unwrap_or_else(|| panic!("Settlement not found"))
     }
 }

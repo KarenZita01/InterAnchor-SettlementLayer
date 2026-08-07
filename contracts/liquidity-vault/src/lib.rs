@@ -9,20 +9,18 @@ use soroban_sdk::{
 pub enum DataKey {
     Admin,
     Pool(u64),
-    PoolCount,
-    ProviderPosition(u64, Address),
-    PoolLiquidity(u64),
     TotalPools,
+    ProviderPosition(u64, Address),
 }
 
 #[derive(Clone)]
 #[contracttype]
 pub struct LiquidityPool {
     pub id: u64,
-    pub asset_a: String,
-    pub anchor_a: String,
-    pub asset_b: String,
-    pub anchor_b: String,
+    pub asset_a: Symbol,
+    pub anchor_a: Symbol,
+    pub asset_b: Symbol,
+    pub anchor_b: Symbol,
     pub reserve_a: i128,
     pub reserve_b: i128,
     pub total_shares: i128,
@@ -64,10 +62,10 @@ impl LiquidityVault {
 
     pub fn create_pool(
         env: Env,
-        asset_a: String,
-        anchor_a: String,
-        asset_b: String,
-        anchor_b: String,
+        asset_a: Symbol,
+        anchor_a: Symbol,
+        asset_b: Symbol,
+        anchor_b: Symbol,
         fee_bps: u32,
     ) -> u64 {
         let admin: Address = env
@@ -149,7 +147,7 @@ impl LiquidityVault {
         } else {
             let share_a = (amount_a * pool.total_shares) / pool.reserve_a;
             let share_b = (amount_b * pool.total_shares) / pool.reserve_b;
-            let shares = share_a.min(share_b);
+            let shares = if share_a < share_b { share_a } else { share_b };
 
             pool.reserve_a += amount_a;
             pool.reserve_b += amount_b;
@@ -309,14 +307,14 @@ impl LiquidityVault {
             .unwrap_or_else(|| panic!("Pool not found"))
     }
 
-    pub fn get_all_pools(env: Env) -> Vec<LiquidityPool> {
+    pub fn get_all_pools(env: Env) -> soroban_sdk::Vec<LiquidityPool> {
         let pool_count: u64 = env
             .storage()
             .instance()
             .get(&DataKey::TotalPools)
             .unwrap_or(0);
 
-        let mut pools = Vec::new(&env);
+        let mut pools = soroban_sdk::Vec::new(&env);
 
         for i in 0..pool_count {
             if let Some(pool) = env

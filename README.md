@@ -1,94 +1,100 @@
-# OmniSettler: An Automated Inter-Anchor Settlement Layer
+# OmniSettler: Automated Inter-Anchor Settlement Layer
 
 [![Stellar Startup Track](https://img.shields.io/badge/Stellar-Startup%20Track-blue)](https://stellar.org)
 [![Soroban](https://img.shields.io/badge/Soroban-Smart%20Contracts-green)](https://soroban.stellar.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Overview
+> **The first automated settlement layer that enables seamless cross-anchor payments on Stellar.**
 
-OmniSettler is an automated settlement layer that enables seamless cross-anchor payments on the Stellar network. It solves the fragmented anchor landscape by allowing merchants to accept any stablecoin and receive their preferred asset, regardless of which anchor the customer uses.
+---
 
-### The Problem
+## Problem
 
-Stellar's Anchor model has created a fragmented landscape:
-- A merchant may accept "USDC via Anchor A"
-- A customer may hold "USDC via Anchor B"
-- Currently, this requires manual swaps or multiple anchor relationships
+Stellar's Anchor model has created a **fragmented stablecoin landscape**:
 
-### The Solution
+- A merchant accepts "USDC via Circle" (Anchor A)
+- A customer holds "USDC via Lobstr" (Anchor B)
+- Currently requires **manual swaps** or **multiple anchor relationships**
 
-OmniSettler provides:
-- **Automated Settlement**: Instant, atomic swaps across different anchor-issued assets
-- **Merchant Dashboard**: Configure settlement preferences in one place
-- **Path-Finding Algorithm**: Finds the cheapest route between anchor-assets in real-time
-- **Liquidity Vaults**: Pools where LPs deposit pairs to facilitate swaps
+**This creates friction, increases costs, and limits adoption.**
+
+## Solution
+
+OmniSettler provides **automated, atomic settlement** across different anchor-issued assets:
+
+```
+Customer (USDC-Anchor A) → [OmniSettler] → Merchant (USDC-Anchor C)
+```
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Automated Settlement** | No manual swaps needed |
+| **Atomic Execution** | All-or-nothing transactions |
+| **Real-time Path Finding** | Optimal routing across pools |
+| **Merchant SDK** | 3-line integration |
+| **Liquidity Pools** | Earn fees by providing liquidity |
+
+---
 
 ## Architecture
 
 ```
-Customer → OmniSettler Contract (Swap) → Merchant's Preferred Asset
+┌─────────────────────────────────────────────────────────────┐
+│                    OMNISETTLER ARCHITECTURE                 │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐│
+│  │ Settlement      │  │ Liquidity       │  │ Merchant    ││
+│  │ Engine          │  │ Vault           │  │ Dashboard   ││
+│  │ (Soroban)       │  │ (Soroban)       │  │ (Next.js)   ││
+│  └─────────────────┘  └─────────────────┘  └─────────────┘│
+│                                                             │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │              Stellar Blockchain                          ││
+│  │  • SEP-24 Deposits/Withdrawals                          ││
+│  │  • SEP-6 Anchor Communication                           ││
+│  │  • SEP-31 Cross-border Payments                         ││
+│  └─────────────────────────────────────────────────────────┘│
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Components
+**[View Full Architecture →](docs/ARCHITECTURE.md)**
 
-1. **Settlement Engine** (`contracts/settlement-engine/`)
-   - Monitors incoming payments
-   - Executes optimal swap paths
-   - Manages merchant preferences
-   - Ensures atomic settlement
-
-2. **Liquidity Vault** (`contracts/liquidity-vault/`)
-   - Pool creation for anchor-asset pairs
-   - Liquidity provision and removal
-   - Swap execution with fee calculation
-   - Price impact protection
-
-3. **Merchant Dashboard** (`frontend/`)
-   - Settlement preferences configuration
-   - Transaction history and analytics
-   - Liquidity pool management
-   - Real-time monitoring
-
-4. **Merchant SDK** (`sdk/`)
-   - Easy integration with 3 lines of code
-   - TypeScript/JavaScript support
-   - Path-finding API
-   - Settlement initiation
+---
 
 ## Quick Start
-
-### Prerequisites
-
-- [Rust](https://rustup.rs/) (for Soroban contracts)
-- [Node.js](https://nodejs.org/) v18+ (for frontend and SDK)
-- [Soroban CLI](https://soroban.stellar.org/docs/getting-started/setup) (for contract deployment)
 
 ### Installation
 
 ```bash
-# Clone the repository
+# Clone repository
 git clone https://github.com/KarenZita01/InterAnchor-SettlementLayer.git
 cd InterAnchor-SettlementLayer
 
-# Install contract dependencies
+# Install dependencies
 cd contracts && cargo build
-
-# Install frontend dependencies
 cd ../frontend && npm install
-
-# Install SDK dependencies
 cd ../sdk && npm install
 ```
 
-### Deploy Contracts
+### Deploy to Testnet
 
 ```bash
 # Deploy Settlement Engine
 cd contracts
-soroban contract deploy --wasm settlement-engine/target/wasm32-unknown-unknown/release/settlement_engine.wasm --source admin
+stellar contract deploy \
+  --wasm settlement-engine/target/wasm32-unknown-unknown/release/settlement_engine.wasm \
+  --source admin \
+  --network testnet
 
 # Deploy Liquidity Vault
-soroban contract deploy --wasm liquidity-vault/target/wasm32-unknown-unknown/release/liquidity_vault.wasm --source admin
+stellar contract deploy \
+  --wasm liquidity-vault/target/wasm32-unknown-unknown/release/liquidity_vault.wasm \
+  --source admin \
+  --network testnet
 ```
 
 ### Run Frontend
@@ -98,129 +104,239 @@ cd frontend
 npm run dev
 ```
 
-### Use SDK
+---
+
+## SDK Integration
 
 ```typescript
 import { OmniSettler } from '@omnisettler/sdk';
 
+// Initialize
 const settler = new OmniSettler({
   apiKey: 'your-api-key',
   network: 'testnet'
 });
 
-// Set preferences
+// Set preferences (merchant receives USDC via Circle)
 await settler.setPreferences({
   targetAsset: 'USDC',
-  targetAnchor: 'Anchor C',
+  targetAnchor: 'Circle',
   maxSlippageBps: 50,
   autoAccept: true
 });
 
-// Initiate settlement
+// Customer initiates payment
 const result = await settler.initiateSettlement({
   customer: 'GABC...XYZ',
   merchant: 'GDEF...UVW',
   sourceAsset: 'USDC',
-  sourceAnchor: 'Anchor A',
-  amount: '1000'
+  sourceAnchor: 'Lobstr',
+  amount: '100'
 });
+
+console.log(result.settlementId); // Settlement ID
+console.log(result.finalAmount);  // Amount received
 ```
 
-## API Reference
+**[View SDK Documentation →](sdk/README.md)**
 
-### Settlement Engine Contract
+---
 
-#### `initialize(admin: Address)`
-Initialize the contract with an admin address.
+## Supported Anchors (MVP)
 
-#### `set_merchant_preferences(merchant, target_asset, target_anchor, max_slippage_bps, auto_accept)`
-Configure how a merchant wants to receive payments.
+| Anchor | Asset | Testnet Issuer |
+|--------|-------|----------------|
+| **Circle** | USDC | `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5` |
+| **Lobstr** | USD | `GDUKMGUGDZQK6YHYA5Z6AY2G4XDSZPSZ3SW5UN3ARVMO6QSRDWP5YLEX` |
+| **SDF Test** | SRT | `GCDNJUBQSX7AJWLJACMJ7I4BC3Z47BQUTMHEICZLE6MU4KQBRYG5JY6B` |
 
-#### `initiate_settlement(customer, merchant, source_asset, source_anchor, amount)`
-Start a new settlement transaction.
+---
 
-#### `execute_settlement(settlement_id, swap_path, final_amount)`
-Execute a pending settlement with the calculated swap path.
+## Smart Contracts
 
-#### `find_swap_path(source_asset, source_anchor, target_asset, target_anchor)`
-Find the optimal path for a cross-anchor swap.
+### Settlement Engine
 
-### Liquidity Vault Contract
+```rust
+// Initialize
+fn initialize(env: Env, admin: Address);
 
-#### `create_pool(asset_a, anchor_a, asset_b, anchor_b, fee_bps)`
-Create a new liquidity pool.
+// Set merchant preferences
+fn set_merchant_preferences(
+    env: Env,
+    merchant: Address,
+    target_asset: Symbol,
+    target_anchor: Symbol,
+    max_slippage_bps: u32,
+    auto_accept: bool,
+);
 
-#### `add_liquidity(provider, pool_id, amount_a, amount_b)`
-Add liquidity to a pool.
+// Initiate settlement
+fn initiate_settlement(
+    env: Env,
+    customer: Address,
+    merchant: Address,
+    source_asset: Symbol,
+    source_anchor: Symbol,
+    amount: i128,
+) -> u64;
 
-#### `remove_liquidity(provider, pool_id, shares)`
-Remove liquidity from a pool.
+// Execute settlement (admin only)
+fn execute_settlement(
+    env: Env,
+    settlement_id: u64,
+    swap_path: SwapPath,
+    final_amount: i128,
+) -> bool;
+```
 
-#### `swap(trader, pool_id, amount_in, min_amount_out, a_to_b)`
-Execute a swap on a pool.
+### Liquidity Vault
+
+```rust
+// Create pool
+fn create_pool(
+    env: Env,
+    asset_a: Symbol,
+    anchor_a: Symbol,
+    asset_b: Symbol,
+    anchor_b: Symbol,
+    fee_bps: u32,
+) -> u64;
+
+// Add liquidity
+fn add_liquidity(
+    env: Env,
+    provider: Address,
+    pool_id: u64,
+    amount_a: i128,
+    amount_b: i128,
+) -> i128;
+
+// Swap
+fn swap(
+    env: Env,
+    trader: Address,
+    pool_id: u64,
+    amount_in: i128,
+    min_amount_out: i128,
+    a_to_b: bool,
+) -> SwapResult;
+```
+
+---
 
 ## Target Users
 
-1. **B2B Merchants**: Accept any stablecoin without managing multiple anchor accounts
-2. **Payment Gateways**: Route payments from various anchors to a single settlement account
-3. **Anchors**: Increase asset velocity by making them easily swappable
+| User | Benefit |
+|------|---------|
+| **B2B Merchants** | Accept any stablecoin, receive preferred asset |
+| **Payment Gateways** | Route payments from any anchor to single settlement |
+| **Anchors** | Increase asset velocity, earn fees |
+| **Liquidity Providers** | Earn fees from cross-anchor swaps |
+
+---
 
 ## Roadmap
 
-### MVP (Current)
-- Support for top 3 most used anchors (Anchor A, B, C)
-- Single stablecoin support (USDC)
-- Basic settlement functionality
+### Phase 1: MVP (Current)
+- [x] Settlement Engine contract
+- [x] Liquidity Vault contract
+- [x] Merchant Dashboard
+- [ ] SDK (In Progress)
+- [ ] Testnet deployment
 
-### Phase 2
-- Merchant SDK for easy integration
-- Additional anchor support
-- Multi-stablecoin support
+### Phase 2: Testnet Launch
+- [ ] SDK published to npm
+- [ ] Path-finding algorithm
+- [ ] 10+ test merchants
+- [ ] Integration testing
 
-### Phase 3
-- Mainnet deployment
-- Advanced path-finding algorithms
-- Liquidity incentive programs
+### Phase 3: Mainnet
+- [ ] Security audit
+- [ ] Mainnet deployment
+- [ ] 50+ merchants
+- [ ] $1M+ settlement volume
 
-### Mainnet Vision
-Become the primary liquidity layer for all Stellar Anchors, effectively turning the fragmented anchor network into a single, unified pool of liquidity.
+---
 
-## Technical Highlights
+## Budget (SCF Submission)
 
-### Path-Finding Algorithm
-- Graph-based path finding
-- Multi-hop swap support
-- Real-time rate optimization
-- Slippage protection
+| Tranche | Deliverable | Amount |
+|---------|-------------|--------|
+| **Tranche 1** | MVP Completion | $50,000 |
+| **Tranche 2** | Testnet Launch | $50,000 |
+| **Tranche 3** | Mainnet Launch | $50,000 |
+| **Total** | | **$150,000** |
 
-### Atomic Settlement
-- All-or-nothing transaction execution
-- Price impact limits
-- Automatic rollback on failure
+**[View Full SCF Submission →](docs/SCF_SUBMISSION.md)**
 
-### Security
-- Admin-only pool management
-- Merchant auth verification
-- Rate limiting and validation
+---
+
+## Development
+
+### Prerequisites
+
+- [Rust](https://rustup.rs/) v1.84+
+- [Stellar CLI](https://soroban.stellar.org/docs/getting-started/setup)
+- [Node.js](https://nodejs.org/) v18+
+
+### Build Contracts
+
+```bash
+cd contracts
+cargo build --target wasm32-unknown-unknown --release
+```
+
+### Run Tests
+
+```bash
+# Contract tests
+cd contracts && cargo test
+
+# SDK tests
+cd sdk && npm test
+```
+
+### Frontend Development
+
+```bash
+cd frontend
+npm run dev
+```
+
+---
 
 ## Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
+
+---
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md) - System design and data flow
+- [API Reference](docs/API.md) - Smart contract interfaces
+- [SDK Guide](sdk/README.md) - Integration documentation
+- [Deployment](DEPLOYMENT.md) - Testnet/mainnet deployment
+- [SCF Submission](docs/SCF_SUBMISSION.md) - Budget and milestones
+
+---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE)
 
-## Acknowledgments
-
-- [Stellar Development Foundation](https://stellar.org)
-- [Soroban Documentation](https://soroban.stellar.org)
-- [Stellar Anchors](https://stellar.org/anchors)
+---
 
 ## Contact
 
-For questions and support, please open an issue on GitHub.
+**Karen Zita** - karenzitaagbo@gmail.com
+
+**GitHub**: https://github.com/KarenZita01/InterAnchor-SettlementLayer
+
+---
+
+Built for the [Stellar Startup Track](https://stellar.org)
