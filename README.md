@@ -8,6 +8,28 @@
 
 ---
 
+## Screenshots
+
+### Merchant Dashboard
+![Merchant Dashboard](screenshots/frontend_dashboard.png)
+
+### Settlement Engine on Stellar Expert
+![Settlement Engine](screenshots/settlement_engine_stellar.png)
+
+### Liquidity Vault on Stellar Expert
+![Liquidity Vault](screenshots/liquidity_vault_stellar.png)
+
+### Settlements Page
+![Settlements Page](screenshots/settlements_page.png)
+
+### Liquidity Pools Page
+![Liquidity Pools](screenshots/liquidity_page.png)
+
+### Settings Page
+![Settings Page](screenshots/settings_page.png)
+
+---
+
 ## Problem
 
 Stellar's Anchor model has created a **fragmented stablecoin landscape**:
@@ -62,6 +84,19 @@ Customer (USDC-Anchor A) → [OmniSettler] → Merchant (USDC-Anchor C)
 ```
 
 **[View Full Architecture →](docs/ARCHITECTURE.md)**
+
+---
+
+## Deployed Contracts (Testnet)
+
+| Contract | Address | Status |
+|----------|---------|--------|
+| **Settlement Engine** | `CDBTP4KOZQFYWDUHHXQGLROIJRDNC3DZDFIHAQ2SF3MMV3SX5CU5UXJQ` | ✅ Deployed |
+| **Liquidity Vault** | `CBI7777AREMC37UCJSQ4XLRQHH6KGIULEDVNQ3TI5G25UTAASFV6ZIB2` | ✅ Deployed |
+
+**View on Stellar Expert:**
+- [Settlement Engine](https://stellar.expert/explorer/testnet/contract/CDBTP4KOZQFYWDUHHXQGLROIJRDNC3DZDFIHAQ2SF3MMV3SX5CU5UXJQ)
+- [Liquidity Vault](https://stellar.expert/explorer/testnet/contract/CBI7777AREMC37UCJSQ4XLRQHH6KGIULEDVNQ3TI5G25UTAASFV6ZIB2)
 
 ---
 
@@ -241,8 +276,8 @@ fn swap(
 - [x] Settlement Engine contract
 - [x] Liquidity Vault contract
 - [x] Merchant Dashboard
-- [ ] SDK (In Progress)
-- [ ] Testnet deployment
+- [x] SDK
+- [x] Testnet deployment
 
 ### Phase 2: Testnet Launch
 - [ ] SDK published to npm
