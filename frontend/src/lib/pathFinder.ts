@@ -26,6 +26,7 @@ export interface SwapPath {
   estimatedRate: number;
   totalFee: number;
   priceImpactBps: number;
+  estimatedAmountOut?: bigint;
 }
 
 export interface SwapHop {
@@ -89,7 +90,7 @@ export class PathFinder {
 
     for (const path of paths) {
       const result = this.evaluatePath(path, amountIn);
-      if (result && result.estimatedAmountOut > bestOutput) {
+      if (result && result.estimatedAmountOut !== undefined && result.estimatedAmountOut > bestOutput) {
         bestOutput = result.estimatedAmountOut;
         bestPath = result;
       }
@@ -229,7 +230,7 @@ export class PathFinder {
 
     for (const amount of amounts) {
       const path = this.findOptimalPath(sourceAsset, sourceAnchor, targetAsset, targetAnchor, amount);
-      if (path && path.estimatedAmountOut > BigInt(0)) {
+      if (path && path.estimatedAmountOut !== undefined && path.estimatedAmountOut > BigInt(0)) {
         const rate = Number(path.estimatedAmountOut) / Number(amount);
         if (!bestResult || rate > bestResult.rate) {
           bestResult = { amount, rate };

@@ -18,22 +18,23 @@ interface SwapHop {
   fee: number
 }
 
+interface SwapPathResult {
+  hops: SwapHop[]
+  estimatedRate: number
+  totalFee: number
+  priceImpactBps: number
+}
+
 interface PathResponse {
   success: boolean
-  path?: {
-    hops: SwapHop[]
-    estimatedRate: number
-    totalFee: number
-    priceImpactBps: number
-    estimatedOutput: string
-  }
+  path?: SwapPathResult & { estimatedOutput: string }
   error?: string
 }
 
 const MOCK_POOLS = [
-  { id: 1, assetA: 'USDC', anchorA: 'Anchor A', assetB: 'USDC', anchorB: 'Anchor C', reserveA: 50000, reserveB: 48500, feeBps: 30, isActive: true },
-  { id: 2, assetA: 'USDT', anchorA: 'Anchor B', assetB: 'USDC', anchorB: 'Anchor C', reserveA: 25000, reserveB: 24200, feeBps: 30, isActive: true },
-  { id: 3, assetA: 'USDC', anchorA: 'Anchor A', assetB: 'USDT', anchorB: 'Anchor B', reserveA: 75000, reserveB: 73500, feeBps: 30, isActive: true },
+  { id: 1, assetA: 'USDC', anchorA: 'Circle', assetB: 'USDC', anchorB: 'Lobstr', reserveA: 50000, reserveB: 48500, feeBps: 30, isActive: true },
+  { id: 2, assetA: 'USD', anchorA: 'Lobstr', assetB: 'USDC', anchorB: 'Circle', reserveA: 25000, reserveB: 24200, feeBps: 30, isActive: true },
+  { id: 3, assetA: 'USDC', anchorA: 'Circle', assetB: 'USD', anchorB: 'Lobstr', reserveA: 75000, reserveB: 73500, feeBps: 30, isActive: true },
 ]
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -86,7 +87,7 @@ function calculateOptimalPath(
   targetAsset: string,
   targetAnchor: string,
   amount: number
-): Omit<SwapHop, 'poolId'>[] | null {
+): SwapPathResult | null {
   if (sourceAsset === targetAsset && sourceAnchor === targetAnchor) {
     return {
       hops: [],
@@ -110,6 +111,7 @@ function calculateOptimalPath(
 
     return {
       hops: [{
+        poolId: directPool.id,
         assetIn: sourceAsset,
         anchorIn: sourceAnchor,
         assetOut: targetAsset,
@@ -124,7 +126,7 @@ function calculateOptimalPath(
   }
 
   if (sourceAsset === targetAsset) {
-    const intermediateAnchor = sourceAnchor === 'Anchor A' ? 'Anchor B' : 'Anchor A'
+    const intermediateAnchor = sourceAnchor === 'Circle' ? 'Lobstr' : 'Circle'
     
     const pool1 = MOCK_POOLS.find(
       p => p.isActive &&
@@ -152,6 +154,7 @@ function calculateOptimalPath(
       return {
         hops: [
           {
+            poolId: pool1.id,
             assetIn: sourceAsset,
             anchorIn: sourceAnchor,
             assetOut: targetAsset,
@@ -160,6 +163,7 @@ function calculateOptimalPath(
             fee: fee1,
           },
           {
+            poolId: pool2.id,
             assetIn: sourceAsset,
             anchorIn: intermediateAnchor,
             assetOut: targetAsset,

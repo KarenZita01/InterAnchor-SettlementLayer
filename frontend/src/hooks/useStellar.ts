@@ -98,8 +98,9 @@ export function useStellar() {
         asset = new StellarSdk.Asset(assetCode, process.env.NEXT_PUBLIC_ISSUER_ADDRESS || '')
       }
 
+      const baseFee = await server.fetchBaseFee()
       const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
-        fee: await server.fetchBaseFee(),
+        fee: baseFee.toString(),
         networkPassphrase: StellarSdk.Networks.TESTNET,
       })
         .addOperation(StellarSdk.Operation.payment({
