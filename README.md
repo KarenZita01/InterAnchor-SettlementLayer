@@ -13,13 +13,13 @@
 | Screenshot | Description |
 |------------|-------------|
 | ![Dashboard](screenshots/frontend_dashboard_small.jpg) | **Merchant Dashboard** - Main interface for managing settlements and viewing analytics |
-| ![Settlement Engine](screenshots/settlement_engine_stellar_small.jpg) | **Settlement Engine** - Deployed Soroban contract on Stellar Testnet |
-| ![Liquidity Vault](screenshots/liquidity_vault_stellar_small.jpg) | **Liquidity Vault** - Pool management contract on Stellar Testnet |
-| ![Settlements](screenshots/settlements_page_small.jpg) | **Settlements Page** - View all cross-anchor settlement transactions |
+| ![Settlements](screenshots/settlements_page_small.jpg) | **Settlements Page** - View all cross-anchor settlement transactions with status filters |
 | ![Liquidity](screenshots/liquidity_page_small.jpg) | **Liquidity Pools** - Provide liquidity and earn fees from swaps |
-| ![Settings](screenshots/settings_page_small.jpg) | **Settings** - Configure settlement preferences and API keys |
+| ![Settings](screenshots/settings_page_small.jpg) | **Settings** - Configure settlement preferences and view SDK integration code |
 
 **Video Demo**: [Watch 30-second demo](screenshots/omnisettler_demo.mp4)
+
+**Live Demo**: [frontend-gilt-eight-21.vercel.app](https://frontend-gilt-eight-21.vercel.app)
 
 ---
 
