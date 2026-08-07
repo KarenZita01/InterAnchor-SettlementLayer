@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "contracts/settlement-engine",
+    "contracts/liquidity-vault",
+]
+
+[workspace.dependencies]
+soroban-sdk = { version = "21.0.0" }

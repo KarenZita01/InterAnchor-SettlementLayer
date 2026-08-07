@@ -1,0 +1,11 @@
+[package]
+name = "liquidity-vault-tests"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+soroban-sdk = { version = "21.0.0", features = ["testutils"] }
+liquidity-vault = { path = "../liquidity-vault" }
+
+[dev-dependencies]
+soroban-sdk = { version = "21.0.0", features = ["testutils"] }
