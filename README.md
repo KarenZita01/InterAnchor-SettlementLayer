@@ -11,22 +11,25 @@
 ## Screenshots
 
 ### Merchant Dashboard
-![Merchant Dashboard](screenshots/frontend_dashboard.png)
+![Merchant Dashboard](screenshots/frontend_dashboard.jpg)
 
 ### Settlement Engine on Stellar Expert
-![Settlement Engine](screenshots/settlement_engine_stellar.png)
+![Settlement Engine](screenshots/settlement_engine_stellar.jpg)
 
 ### Liquidity Vault on Stellar Expert
-![Liquidity Vault](screenshots/liquidity_vault_stellar.png)
+![Liquidity Vault](screenshots/liquidity_vault_stellar.jpg)
 
 ### Settlements Page
-![Settlements Page](screenshots/settlements_page.png)
+![Settlements Page](screenshots/settlements_page.jpg)
 
 ### Liquidity Pools Page
-![Liquidity Pools](screenshots/liquidity_page.png)
+![Liquidity Pools](screenshots/liquidity_page.jpg)
 
 ### Settings Page
-![Settings Page](screenshots/settings_page.png)
+![Settings Page](screenshots/settings_page.jpg)
+
+### Video Demo
+[![Demo Video](screenshots/omnisettler_demo.mp4)](screenshots/omnisettler_demo.mp4)
 
 ---
 
