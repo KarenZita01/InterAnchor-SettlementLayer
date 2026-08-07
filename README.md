@@ -10,26 +10,16 @@
 
 ## Screenshots
 
-### Merchant Dashboard
-![Merchant Dashboard](screenshots/frontend_dashboard.jpg)
+| Screenshot | Description |
+|------------|-------------|
+| ![Dashboard](screenshots/frontend_dashboard_small.jpg) | **Merchant Dashboard** - Main interface for managing settlements and viewing analytics |
+| ![Settlement Engine](screenshots/settlement_engine_stellar_small.jpg) | **Settlement Engine** - Deployed Soroban contract on Stellar Testnet |
+| ![Liquidity Vault](screenshots/liquidity_vault_stellar_small.jpg) | **Liquidity Vault** - Pool management contract on Stellar Testnet |
+| ![Settlements](screenshots/settlements_page_small.jpg) | **Settlements Page** - View all cross-anchor settlement transactions |
+| ![Liquidity](screenshots/liquidity_page_small.jpg) | **Liquidity Pools** - Provide liquidity and earn fees from swaps |
+| ![Settings](screenshots/settings_page_small.jpg) | **Settings** - Configure settlement preferences and API keys |
 
-### Settlement Engine on Stellar Expert
-![Settlement Engine](screenshots/settlement_engine_stellar.jpg)
-
-### Liquidity Vault on Stellar Expert
-![Liquidity Vault](screenshots/liquidity_vault_stellar.jpg)
-
-### Settlements Page
-![Settlements Page](screenshots/settlements_page.jpg)
-
-### Liquidity Pools Page
-![Liquidity Pools](screenshots/liquidity_page.jpg)
-
-### Settings Page
-![Settings Page](screenshots/settings_page.jpg)
-
-### Video Demo
-[![Demo Video](screenshots/omnisettler_demo.mp4)](screenshots/omnisettler_demo.mp4)
+**Video Demo**: [Watch 30-second demo](screenshots/omnisettler_demo.mp4)
 
 ---
 
